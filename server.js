@@ -2,11 +2,12 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const dotenv = require("dotenv");
 const mongoose = require("mongoose");
-
+dotenv.config();
 app.use(bodyParser.urlencoded({extended: false}))
 
-let url = 'mongodb+srv://ankit:8090730652@cluster0.abc7i.mongodb.net/Exercise?retryWrites=true&w=majority';
+let url = 'mongodb+srv://ankit:'+process.env.password+'@cluster0.abc7i.mongodb.net/Exercise?retryWrites=true&w=majority';
 mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true});
 
 app.use(cors())
@@ -17,7 +18,7 @@ app.get("/", (req,res) => {
 });
 
 var listener = app.listen(process.env.PORT || 3000 , () => {
-    console.log("Server is listening on port " + listener.address().PORT)
+    console.log("Server is listening on port " + process.env.PORT)
 });
 
 let exerciseSessionSchema = new mongoose.Schema({
