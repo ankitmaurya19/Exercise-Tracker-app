@@ -16,8 +16,8 @@ app.get("/", (req,res) => {
     res.sendFile(__dirname+"/views/index.html")
 });
 
-app.listen(process.env.PORT || 3000 , () => {
-    console.log("Server is listening on port " )
+var listener = app.listen(process.env.PORT || 3000 , () => {
+    console.log("Server is listening on port " + listener.address().PORT)
 });
 
 let exerciseSessionSchema = new mongoose.Schema({
@@ -31,7 +31,7 @@ let userSchema = new mongoose.Schema({
     log: [exerciseSessionSchema]
 })
 
-let exercixeSchema = mongoose.model("Session", exerciseSessionSchema)
+let Session = mongoose.model("Session", exerciseSessionSchema)
 let user = mongoose.model("user", userSchema)
 
 app.post('/api/exercise/new-user', (req,res)=> {
@@ -47,9 +47,9 @@ app.post('/api/exercise/new-user', (req,res)=> {
 })
 
 app.get("/api/exercise/users", (request , response) =>{
-    user.find({}, (error , arrayoFUsers) =>{
+    user.find({}, (error , arrayOfUsers) =>{
         if(!error){
-            response.json(arrayoFUsers)
+            response.json(arrayOfUsers)
         }
     })
 })
@@ -57,19 +57,20 @@ app.get("/api/exercise/users", (request , response) =>{
 app.post("/api/exercise/add", (request, response) =>{
     let newSession = new Session({
         description: request.body.description,
-        duration: pareInt(request.body.duration),
+        duration: parseInt(request.body.duration),
         date: request.body.date
     })
     if(newSession.date === ''){
         newSession.date = new Date().toISOString().substring(0,10)
     }
-    User.findByIdAndUpdate(
-        request.body.userId,
+    // console.log(request.body.id)
+    user.findByIdAndUpdate(
+        request.body.UserId,
         {$push: {log: newSession}},
         {new : true},
         (error, updateUser) => {
             let responseObject = {}
-            responseObject['_id'] = updateUser.id
+            responseObject["_id"] = updateUser.UserId
             responseObject["username"] = updateUser.username
             responseObject["date"] = new Date(newSession.date).toDateString()
             responseObject["description"] = newSession.description
@@ -80,9 +81,9 @@ app.post("/api/exercise/add", (request, response) =>{
 })
 
 app.get("/api/exercise/log", (request, response) => {
-    User.findById(request.body.userId, (error, result) => {
+    user.findById(request.body.UserId, (error, result) => {
         if(!error){
-            let resposeObject = result
+            let responseObject = result
             
             if(request.query.from || request.query.to){
                 let fromDate = new Date(0)
@@ -95,7 +96,7 @@ app.get("/api/exercise/log", (request, response) => {
                 }
                 fromDate = fromDate.getTime()
                 toDate = toDate.getTime()
-                responseObject.log = responseobject.log.filter((session) =>{
+                responseObject.log = responseObject.log.filter((Session) =>{
                     let sessionDate = new Date(sessionDate).getTime()
                     return sessionDate >= fromDate && sessionDate <= toDate
                 })
