@@ -7,12 +7,13 @@ const mongoose = require("mongoose");
 dotenv.config();
 app.use(bodyParser.urlencoded({extended: false}))
 
-let url = 'mongodb+srv://ankit:'+process.env.password+'@cluster0.abc7i.mongodb.net/Exercise?retryWrites=true&w=majority';
+//let url = 'mongodb+srv://'+process.env.user+':'+process.env.password+'@cluster0.abc7i.mongodb.net/Exercise?retryWrites=true&w=majority';
+let url = 'mongodb+srv://ankit:8090730652@cluster0.ovqf6.mongodb.net/Exercise?retryWrites=true&w=majority';
 mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true});
 
 app.use(cors())
-
 app.use(express.static("public"))
+
 app.get("/", (req,res) => {
     res.sendFile(__dirname+"/views/index.html")
 });
@@ -65,24 +66,35 @@ app.post("/api/exercise/add", (request, response) =>{
         newSession.date = new Date().toISOString().substring(0,10)
     }
     // console.log(request.body.id)
-    user.findByIdAndUpdate(
-        request.body.UserId,
-        {$push: {log: newSession}},
-        {new : true},
-        (error, updateUser) => {
-            let responseObject = {}
-            responseObject["_id"] = updateUser.UserId
-            responseObject["username"] = updateUser.username
-            responseObject["date"] = new Date(newSession.date).toDateString()
-            responseObject["description"] = newSession.description
-            responseObject['duration'] = newSession.duration
-            response.json(responseObject)
+    var UserId = request.body.Username;
+    user.findOne({username:request.body.Username} , (err , res) =>{
+        if(!err) {
+            if(res == null) {
+                response.json("User doesn't exists.");
+            } else {
+                user.findOneAndUpdate(
+                    {username: UserId},
+                    {$push: {log: newSession}},
+                    {new : true},
+                    (error, updateUser) => {
+                        let responseObject = {}
+                        //responseObject["_id"] = updateUser.UserId
+                        responseObject["username"] = updateUser.username
+                        responseObject["date"] = new Date(newSession.date).toDateString()
+                        responseObject["description"] = newSession.description
+                        responseObject['duration'] = newSession.duration
+                        response.json(responseObject)
+                    }
+                )
+            }
         }
-    )
+    })
+    
 })
 
 app.get("/api/exercise/log", (request, response) => {
-    user.findById(request.body.UserId, (error, result) => {
+    // console.log(request.query);
+    user.findById(request.query.userId, (error, result) => {
         if(!error){
             let responseObject = result
             
@@ -106,7 +118,7 @@ app.get("/api/exercise/log", (request, response) => {
                 responseObject.log = responseObject.log.slice(0, request.query.limit)
             }
 
-            response.resposeObject['count'] = result.log.length
+            // response.resposeObject['count'] = result.log.length
             response.json(responseObject)
         }
     })
